@@ -1,23 +1,29 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { getFilter, setFilterValue } from 'store/phonebook.slice';
-import { useGetAllContactsQuery } from 'store/contacts.service';
+import { getAllContacts, deleteContactById } from 'store/contacts.service';
 import InputField from 'components/InputField';
+import { useEffect } from 'react';
 import ContactItem from 'components/ContactItem';
 import css from './Contacts.module.css';
 
 const Contacts = () => {
   const filter = useSelector(getFilter);
   const dispatch = useDispatch();
+  const contacts = useSelector(state => state.contacts);
 
-  const { data: contacts, error, isLoading } = useGetAllContactsQuery();
+  useEffect(() => {
+    dispatch(getAllContacts());
+  }, [dispatch]);
+
   const handleInputChange = e => {
     dispatch(setFilterValue(e.target.value));
   };
 
-  const filteredContacts =
-    contacts !== undefined
-      ? contacts.filter(it => it.name.includes(filter))
-      : [];
+  const handleDeleteContact = async id => {
+    await dispatch(deleteContactById(id));
+  };
+
+  const filteredContacts = contacts.data.filter(it => it.name.includes(filter));
 
   return (
     <>
@@ -32,12 +38,18 @@ const Contacts = () => {
       </div>
 
       <div className={css.container}>
-        {isLoading && <h1>Loading...</h1>}
-        {error && <h3>Error: {error}</h3>}
-        {contacts && (
+        {contacts.status === 'loading' && <h1>Loading...</h1>}
+        {contacts.status === 'failed' && <h3>Error: {contacts.error}</h3>}
+        {contacts.status === 'succeeded' && (
           <ul>
             {filteredContacts.map(({ id, name, number }) => (
-              <ContactItem key={id} id={id} name={name} number={number} />
+              <ContactItem
+                key={id}
+                id={id}
+                name={name}
+                number={number}
+                onDelete={() => handleDeleteContact(id)}
+              />
             ))}
           </ul>
         )}

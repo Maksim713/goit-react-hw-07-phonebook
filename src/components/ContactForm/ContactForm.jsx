@@ -1,20 +1,23 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { getAllContacts } from 'store/contacts.service';
+import { addContactItem } from 'store/contacts.service';
 import InputField from '../InputField';
-import { useAddContactItemMutation } from 'store/contacts.service';
 import css from './ContactForm.module.css';
 
 const initialValue = { name: '', number: '' };
 
 function ContactForm() {
   const [value, setValue] = useState(initialValue);
-  const [addContactItem, { isLoading }] = useAddContactItemMutation();
+  const dispatch = useDispatch();
 
   const handleInputChange = e =>
     setValue(p => ({ ...p, [e.target.name]: e.target.value }));
 
-  const handleFormSubmit = e => {
+  const handleFormSubmit = async e => {
     e.preventDefault();
-    addContactItem(value);
+    await dispatch(addContactItem(value));
+    await dispatch(getAllContacts());
     setValue(initialValue);
     reset();
   };
@@ -47,8 +50,8 @@ function ContactForm() {
         required
         onChange={handleInputChange}
       />
-      <button className={css.btn} type="submit" disabled={isLoading}>
-        Add contact{isLoading && <span>...</span>}
+      <button className={css.btn} type="submit">
+        Add contact
       </button>
     </form>
   );
